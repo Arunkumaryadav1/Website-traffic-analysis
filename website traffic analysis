@@ -1,0 +1,84 @@
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import matplotlib.pyplot as plt
+df= pd.read_csv("daily-website-visitors.csv")
+df=pd.DataFrame(df)
+df.rename(columns={'Day.Of.Week':'day_of_week','Page.Loads':'page_loads','Unique.Visits':'unique_visits',
+          'First.Time.Visits':'first_visits','Returning.Visits':'returning_visits'},inplace=True)
+#print(df.to_string())
+#data preproccessing
+df=df.replace(',','',regex=True)
+print(df.to_string())
+df['page_loads']=df['page_loads'].astype(str).astype('int64')
+df['unique_visits']=df['unique_visits'].astype(str).astype('int64')
+df['first_visits']=df['first_visits'].astype(str).astype('int64')
+df['returning_visits']=df['returning_visits'].astype(str).astype('int64')
+df
+print(df.isna().sum())
+print(df.duplicated().sum())
+print(df.info())
+print(df.dtypes)
+sum1=df.groupby(['Day'])[['page_loads','unique_visits','first_visits','returning_visits']].sum().sort_values(by='unique_visits',
+                                                                                                             ascending=False)
+print(sum1)
+pred_df=df[['page_loads','unique_visits','first_visits','returning_visits','Day']]
+print(pred_df)
+pred_df['Day_1']=np.where((df['Day']=='Tuesday') | (df['Day']=='Wednesday') 
+                           | (df['Day']=='Thursday') | (df['Day']=='Monday'),1,0)
+pred_df
+
+pred_df.drop('Day',axis=1,inplace=True)
+pred_df.head(5)
+X1=pred_df[['page_loads','first_visits','returning_visits','Day_1']]
+Y1=pred_df['unique_visits']
+print(X1)
+print(Y1)
+pred_df.head(5)
+from sklearn.model_selection import train_test_split
+X_train,X_test, Y_train, Y_test=train_test_split(X1,Y1,train_size=.8,random_state=0)
+print(X_train)
+
+from sklearn.svm import SVR
+sv1=SVR(kernel='rbf',C=1e4,gamma=0.00001)
+sv1.fit(X_train,Y_train)
+pred2=sv1.predict(X_test)
+svr=pd.DataFrame({'Actual':Y_test,'Predicted':pred2})
+print(svr)
+plt.scatter(pred2,Y_test, color="green")   
+#mtp.plot(x_train, x_pred, color="red")    
+plt.title("traffic_on_website")  
+plt.xlabel("Page_load")  
+plt.ylabel("unique_visitors")  
+plt.show()  
+print("hi")
+
+
+from sklearn.tree import DecisionTreeRegressor
+d1=DecisionTreeRegressor(random_state=0)
+d1.fit(X_train, Y_train)
+d1_pred= d1.predict(X_test)
+d2=pd.DataFrame({'Actual':Y_test,'Predicted': d1_pred})
+print(d2)
+d1.score(X_test,Y_test)*100
+plt.scatter(d1_pred,Y_test, color="green")   
+#mtp.plot(x_train, x_pred, color="red")    
+plt.title("traffic_on_website")  
+plt.xlabel("Page_load")  
+plt.ylabel("unique_visitors")  
+plt.show()  
+
+from sklearn.linear_model import LinearRegression
+regression_1= LinearRegression(fit_intercept=False, normalize=True)
+regression_1.fit(X_train,Y_train)
+y_pred1=regression_1.predict(X_test)
+I1=pd.DataFrame({'Actual':Y_test,'Predicted':y_pred1})
+print(I1)
+regression_1.score(X_test,Y_test)*100 
+plt.scatter(y_pred1,Y_test, color="green")   
+#mtp.plot(x_train, x_pred, color="red")    
+plt.title("traffic_on_website")  
+plt.xlabel("Page_load")  
+plt.ylabel("unique_visitors")  
+plt.show()  
+print("hi")
